@@ -1,0 +1,18 @@
+{
+  "name": "smart-aquarium-functions",
+  "description": "Cloud Functions: status evaluation, alerts, AI-assisted care recommendations",
+  "type": "module",
+  "main": "src/index.js",
+  "engines": { "node": "20" },
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "serve": "firebase emulators:start --only functions,database",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "firebase-admin": "^12.7.0",
+    "firebase-functions": "^6.1.0"
+  }
+}

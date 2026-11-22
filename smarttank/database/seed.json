@@ -1,0 +1,18 @@
+{
+  "aquarium": {
+    "settings": {
+      "fishProfileId": "betta",
+      "feeding": { "enabled": true, "times": "08:00,18:00", "portions": 1 },
+      "tank": { "sensorToBottomCm": 45, "fullWaterCm": 30 },
+      "notifications": { "browser": true }
+    },
+    "profiles": {
+      "goldfish": { "name": "Goldfish", "tempMin": 18, "tempMax": 24, "phMin": 7.0, "phMax": 8.0, "levelMinPct": 85, "levelCriticalPct": 70, "feedsPerDay": 2, "portionsPerFeed": 2, "notes": "Cold-water fish; heavy waste producer, needs strong filtration." },
+      "betta": { "name": "Betta (Siamese fighting fish)", "tempMin": 24, "tempMax": 28, "phMin": 6.5, "phMax": 7.5, "levelMinPct": 85, "levelCriticalPct": 70, "feedsPerDay": 2, "portionsPerFeed": 1, "notes": "Tropical; keep a heater and gentle water flow." },
+      "guppy": { "name": "Guppy", "tempMin": 22, "tempMax": 28, "phMin": 7.0, "phMax": 8.0, "levelMinPct": 85, "levelCriticalPct": 70, "feedsPerDay": 2, "portionsPerFeed": 1, "notes": "Hardy livebearer; prefers slightly hard water." },
+      "neon_tetra": { "name": "Neon tetra", "tempMin": 21, "tempMax": 27, "phMin": 6.0, "phMax": 7.0, "levelMinPct": 85, "levelCriticalPct": 70, "feedsPerDay": 2, "portionsPerFeed": 1, "notes": "Schooling fish; prefers soft, slightly acidic water." },
+      "tilapia": { "name": "Tilapia", "tempMin": 25, "tempMax": 30, "phMin": 6.5, "phMax": 8.5, "levelMinPct": 85, "levelCriticalPct": 70, "feedsPerDay": 3, "portionsPerFeed": 2, "notes": "Warm-water fish; tolerant of a wide pH range." }
+    },
+    "commands": { "feedNow": { "requested": false, "portions": 1 } }
+  }
+}

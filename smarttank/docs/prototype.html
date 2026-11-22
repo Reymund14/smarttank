@@ -1,0 +1,693 @@
+<title>SmartTank Prototype</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a single scrolling lab notebook — sticky section nav, then three plates: system, wiring, working prototype. */
+:root {
+  --bg: #f3f6f6;
+  --panel: #ffffff;
+  --ink: #12211f;
+  --muted: #5b6b69;
+  --line: #d6e0df;
+  --accent: #0f766e;
+  --accent-soft: #d5efeb;
+  --water: #7cc7e8;
+  --water-deep: #3b98c4;
+  --glass: #e9f4f7;
+  --board: #1f3d36;
+  --board-ink: #e6f2ee;
+  --lcd: #a7c957;
+  --lcd-ink: #1d2b12;
+  --ok: #15803d; --ok-bg: #dcfce7;
+  --warn: #a16207; --warn-bg: #fef3c7;
+  --crit: #b91c1c; --crit-bg: #fee2e2;
+  --w-5v: #dc2626; --w-3v: #ea580c; --w-gnd: #334155;
+  --w-temp: #ca8a04; --w-ph: #7c3aed; --w-trig: #2563eb; --w-echo: #059669;
+  --w-servo: #d97706; --w-buzz: #db2777; --w-sda: #0891b2; --w-scl: #4f46e5;
+  --f-display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --f-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1716; --panel: #13211f; --ink: #e3eeec; --muted: #93a7a4; --line: #24393a;
+    --accent: #2dd4bf; --accent-soft: #123a36; --water: #1e5f7d; --water-deep: #174a63; --glass: #172a2c;
+    --board: #0b2a24; --board-ink: #d5eee7; --lcd: #8fb34a; --lcd-ink: #10190a;
+    --ok: #4ade80; --ok-bg: #12331f; --warn: #fbbf24; --warn-bg: #33270b; --crit: #f87171; --crit-bg: #3b1515;
+    --w-gnd: #94a3b8; --w-ph: #a78bfa; --w-trig: #60a5fa; --w-echo: #34d399; --w-scl: #818cf8; --w-sda: #22d3ee;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1716; --panel: #13211f; --ink: #e3eeec; --muted: #93a7a4; --line: #24393a;
+  --accent: #2dd4bf; --accent-soft: #123a36; --water: #1e5f7d; --water-deep: #174a63; --glass: #172a2c;
+  --board: #0b2a24; --board-ink: #d5eee7; --lcd: #8fb34a; --lcd-ink: #10190a;
+  --ok: #4ade80; --ok-bg: #12331f; --warn: #fbbf24; --warn-bg: #33270b; --crit: #f87171; --crit-bg: #3b1515;
+  --w-gnd: #94a3b8; --w-ph: #a78bfa; --w-trig: #60a5fa; --w-echo: #34d399; --w-scl: #818cf8; --w-sda: #22d3ee;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.55; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--panel); }
+.wrap { max-width: 1180px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(1.7rem, 4vw, 2.4rem); letter-spacing: -0.01em; }
+.subtitle { font-family: var(--f-display); font-size: clamp(1.05rem, 2.4vw, 1.3rem); font-weight: 500; max-width: 60ch; text-wrap: balance; }
+h2 { font-size: 1.45rem; }
+h3 { font-size: 1.02rem; }
+p { margin: 0; }
+.mono { font-family: var(--f-mono); }
+.muted { color: var(--muted); }
+.eyebrow { font-family: var(--f-mono); font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+
+header.top { padding-block: 32px 20px; display: grid; gap: 10px; }
+header.top p { max-width: 70ch; }
+nav.sec { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--panel); border-bottom: 1px solid var(--line); }
+nav.sec .wrap { display: flex; gap: 4px; overflow-x: auto; padding-block: 8px; }
+nav.sec a { font-weight: 600; text-decoration: none; color: var(--muted); padding: 6px 12px; border-radius: 8px; white-space: nowrap; font-size: 0.92rem; }
+nav.sec a:hover, nav.sec a:focus-visible { color: var(--accent); background: var(--accent-soft); outline: none; }
+
+section.plate { padding-block: 36px 8px; display: grid; gap: 16px; scroll-margin-top: 56px; }
+.plate-head { display: grid; gap: 6px; max-width: 75ch; }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px; min-width: 0; }
+.scroll-x { overflow-x: auto; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.mermaid { background: var(--panel); margin: 0; display: flex; justify-content: center; }
+
+/* wiring */
+#wiring-svg { width: 100%; min-width: 860px; height: auto; display: block; }
+#wiring-svg text { font-family: var(--f-mono); fill: var(--ink); }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 0.85rem; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 18px; height: 4px; border-radius: 2px; display: inline-block; }
+table.pins { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+table.pins th, table.pins td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+table.pins td:nth-child(2) { font-family: var(--f-mono); white-space: nowrap; }
+table.pins th { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+
+/* prototype */
+.proto { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+#tank-svg { width: 100%; height: auto; display: block; }
+#tank-svg text { font-family: var(--f-mono); font-size: 13px; fill: var(--ink); }
+.controls { display: grid; gap: 14px; }
+.ctrl { display: grid; gap: 4px; }
+.ctrl label { display: flex; justify-content: space-between; font-weight: 600; font-size: 0.9rem; }
+.ctrl output { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+input[type="range"] { width: 100%; accent-color: var(--accent); }
+select, button { font: inherit; }
+select { padding: 7px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); width: 100%; }
+.btns { display: flex; flex-wrap: wrap; gap: 8px; }
+button { cursor: pointer; border-radius: 8px; padding: 7px 12px; font-weight: 600; font-size: 0.88rem; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--panel); }
+button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.phone { border: 1px solid var(--line); border-radius: 18px; padding: 14px; background: var(--bg); display: grid; gap: 10px; }
+.phone-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.tile { background: var(--panel); border: 1px solid var(--line); border-top: 3px solid var(--line); border-radius: 10px; padding: 8px; min-width: 0; }
+.tile.normal { border-top-color: var(--ok); } .tile.warning { border-top-color: var(--warn); } .tile.critical { border-top-color: var(--crit); }
+.tile .lbl { font-size: 0.72rem; color: var(--muted); }
+.tile .val { font-family: var(--f-mono); font-size: 1.25rem; font-weight: 500; font-variant-numeric: tabular-nums; }
+.pill { display: inline-block; font-size: 0.72rem; font-weight: 700; padding: 1px 8px; border-radius: 999px; }
+.pill.normal { background: var(--ok-bg); color: var(--ok); } .pill.warning { background: var(--warn-bg); color: var(--warn); } .pill.critical { background: var(--crit-bg); color: var(--crit); }
+.rec { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px; font-size: 0.86rem; display: grid; gap: 6px; }
+.rec ol { margin: 0; padding-left: 18px; }
+.rec .disc { font-size: 0.75rem; color: var(--muted); font-style: italic; }
+.log { font-family: var(--f-mono); font-size: 0.78rem; display: grid; gap: 2px; max-height: 120px; overflow-y: auto; }
+
+.steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.step { display: grid; gap: 6px; }
+.step .n { font-family: var(--f-mono); font-size: 0.78rem; color: var(--accent); }
+.step ul { margin: 0; padding-left: 18px; font-size: 0.9rem; }
+footer { padding-block: 28px 40px; font-size: 0.85rem; }
+
+@keyframes drop { from { transform: translateY(0); opacity: 1; } to { transform: translateY(var(--fall)); opacity: 0.2; } }
+@keyframes pulse { 0%,100% { opacity: 0.25; } 50% { opacity: 1; } }
+.buzz-on { animation: pulse 0.8s infinite; }
+@media (prefers-reduced-motion: reduce) { .buzz-on { animation: none; opacity: 1; } }
+
+@media (max-width: 900px) {
+  .proto, .grid2 { grid-template-columns: 1fr; }
+}
+@media (max-width: 420px) {
+  .tiles { grid-template-columns: 1fr 1fr 1fr; }
+  .tile .val { font-size: 1.05rem; }
+}
+</style>
+
+<header class="top wrap">
+  <span class="eyebrow">Capstone · BS Information Technology · OLFU</span>
+  <h1>SmartTank</h1>
+  <p class="subtitle">An IoT and AI-Integrated System for Aquarium Water Quality Monitoring, Care Recommendation, and Scheduled Feeding</p>
+  <p class="muted">How SmartTank fits together, how every part is wired to the ESP32, and an interactive model of the finished prototype you can test before building it.</p>
+</header>
+
+<nav class="sec" aria-label="Sections">
+  <div class="wrap">
+    <a href="#architecture">1 · System architecture</a>
+    <a href="#flow">2 · Alert flow</a>
+    <a href="#wiring">3 · Wiring diagram</a>
+    <a href="#prototype">4 · Interactive prototype</a>
+    <a href="#build">5 · Build order</a>
+  </div>
+</nav>
+
+<main class="wrap">
+
+  <section class="plate" id="architecture">
+    <div class="plate-head">
+      <span class="eyebrow">Plate 1</span>
+      <h2>System architecture</h2>
+      <p class="muted">Three layers: the device at the tank, the cloud that stores and analyzes the data, and the dashboard the owner uses. The ESP32 keeps feeding on schedule even if the internet goes down.</p>
+    </div>
+    <div class="panel scroll-x">
+<pre class="mermaid">
+flowchart LR
+  subgraph DEV["Device layer (at the aquarium)"]
+    T["DS18B20<br/>temperature"] --> E
+    P["PH-4502C<br/>pH sensor"] --> E
+    U["JSN-SR04T<br/>water level"] --> E
+    R["DS3231 RTC<br/>offline clock"] --> E
+    E(("ESP32<br/>controller"))
+    E --> S["Servo feeder<br/>portions"]
+    E --> L["16x2 LCD"]
+    E --> B["Buzzer<br/>critical alarm"]
+  end
+  subgraph CLOUD["Cloud layer (Firebase)"]
+    DB[("Realtime Database<br/>live · history · logs<br/>settings · profiles")]
+    CF["Cloud Functions<br/>evaluate ranges<br/>alerts · AI requests"]
+    AI["Claude API<br/>care recommendation"]
+    DB <--> CF
+    CF --> AI
+  end
+  subgraph APP["Application layer"]
+    W["React web dashboard<br/>phone / laptop"]
+  end
+  E -- "Wi-Fi: readings, feeding logs" --> DB
+  DB -- "schedule, fish profile, Feed Now" --> E
+  W <--> DB
+</pre>
+    </div>
+  </section>
+
+  <section class="plate" id="flow">
+    <div class="plate-head">
+      <span class="eyebrow">Plate 2</span>
+      <h2>What happens when the water gets too warm</h2>
+      <p class="muted">The same path runs for low pH and low water level. The AI is only asked once per new problem, and the built-in rules answer if the AI is unreachable.</p>
+    </div>
+    <div class="panel scroll-x">
+<pre class="mermaid">
+sequenceDiagram
+  participant S as Sensors
+  participant E as ESP32
+  participant D as Firebase DB
+  participant F as Cloud Function
+  participant A as Claude API
+  participant U as Dashboard
+  S->>E: 30.6 °C (Betta range 24–28 °C)
+  E->>E: Local check: CRITICAL → buzzer + LCD
+  E->>D: write /live and /history
+  D->>F: onLiveReading trigger
+  F->>F: Evaluate vs fish profile → Critical
+  F->>D: open alert
+  F->>A: readings + profile + recent trend
+  A-->>F: causes, actions, urgency
+  F->>D: save recommendation
+  D-->>U: live update: alert + care steps
+  U->>D: owner taps "Feed now" or changes schedule
+  D-->>E: device reads command within 3 s
+</pre>
+    </div>
+  </section>
+
+  <section class="plate" id="wiring">
+    <div class="plate-head">
+      <span class="eyebrow">Plate 3</span>
+      <h2>Wiring diagram</h2>
+      <p class="muted">Schematic view: pins are grouped by function, not in the physical order on the board. Connect every GND together and power the servo from the 5V supply, not from the ESP32.</p>
+    </div>
+    <div class="panel scroll-x">
+      <svg id="wiring-svg" viewBox="0 0 1120 660" role="img" aria-label="Wiring diagram of ESP32 connected to the temperature, pH, ultrasonic sensors, servo, buzzer, LCD and RTC"></svg>
+    </div>
+    <div class="legend" id="legend"></div>
+    <div class="grid2">
+      <div class="panel scroll-x">
+        <h3>Signal connections</h3>
+        <table class="pins">
+          <thead><tr><th>Part</th><th>Pin → ESP32</th><th>Note</th></tr></thead>
+          <tbody>
+            <tr><td>DS18B20</td><td>DATA → GPIO4</td><td>4.7 kΩ pull-up from DATA to 3.3V</td></tr>
+            <tr><td>PH-4502C</td><td>Po → GPIO34</td><td>10 kΩ / 20 kΩ divider (5V → 3.3V). ADC1 pin only.</td></tr>
+            <tr><td>JSN-SR04T</td><td>TRIG → GPIO5</td><td>Direct</td></tr>
+            <tr><td>JSN-SR04T</td><td>ECHO → GPIO18</td><td>10 kΩ / 20 kΩ divider</td></tr>
+            <tr><td>Servo</td><td>SIG → GPIO13</td><td>Power from the 5V supply</td></tr>
+            <tr><td>Buzzer</td><td>+ → GPIO25</td><td>Use a transistor if it draws &gt; 20 mA</td></tr>
+            <tr><td>LCD + DS3231</td><td>SDA → GPIO21</td><td>Shared I2C bus</td></tr>
+            <tr><td>LCD + DS3231</td><td>SCL → GPIO22</td><td>LCD address 0x27 (or 0x3F)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="panel scroll-x">
+        <h3>Power connections</h3>
+        <table class="pins">
+          <thead><tr><th>Part</th><th>Supply</th><th>Note</th></tr></thead>
+          <tbody>
+            <tr><td>5V 2–3A adapter</td><td>5V → ESP32 VIN</td><td>Powers the whole circuit</td></tr>
+            <tr><td>DS18B20</td><td>3.3V, GND</td><td></td></tr>
+            <tr><td>PH-4502C</td><td>5V, GND</td><td>Module needs 5V</td></tr>
+            <tr><td>JSN-SR04T</td><td>5V, GND</td><td></td></tr>
+            <tr><td>Servo</td><td>5V, GND</td><td>Straight from the adapter; add a 470 µF capacitor across 5V/GND</td></tr>
+            <tr><td>LCD I2C</td><td>5V, GND</td><td></td></tr>
+            <tr><td>DS3231</td><td>3.3V, GND</td><td>CR2032 keeps time when unplugged</td></tr>
+            <tr><td>All parts</td><td>Common GND</td><td>Every ground joined together</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="plate" id="prototype">
+    <div class="plate-head">
+      <span class="eyebrow">Plate 4</span>
+      <h2>Interactive prototype</h2>
+      <p class="muted">A side view of the finished build. Move the sliders or pick a scenario to see what the LCD, buzzer and dashboard show, then press Feed now to run the feeder. It uses the same status rules as the real firmware and Cloud Functions.</p>
+    </div>
+    <div class="proto">
+      <div class="panel">
+        <svg id="tank-svg" viewBox="0 0 900 540" role="img" aria-label="Side view of the aquarium prototype with sensors, feeder and control box"></svg>
+      </div>
+      <div class="controls panel">
+        <div class="ctrl">
+          <label for="fish">Fish profile</label>
+          <select id="fish"></select>
+        </div>
+        <div class="ctrl">
+          <label for="temp">Water temperature <output id="temp-o"></output></label>
+          <input type="range" id="temp" min="15" max="35" step="0.1" value="26">
+        </div>
+        <div class="ctrl">
+          <label for="ph">pH level <output id="ph-o"></output></label>
+          <input type="range" id="ph" min="5" max="9.5" step="0.01" value="7">
+        </div>
+        <div class="ctrl">
+          <label for="lvl">Water level <output id="lvl-o"></output></label>
+          <input type="range" id="lvl" min="40" max="100" step="1" value="95">
+        </div>
+        <div class="btns" aria-label="Scenarios">
+          <button data-sc="normal">Normal</button>
+          <button data-sc="hot">Heater stuck on</button>
+          <button data-sc="acid">Acidic water</button>
+          <button data-sc="low">Evaporation</button>
+        </div>
+        <div class="btns">
+          <label for="portions" class="muted" style="align-self:center;font-size:.85rem">Portions</label>
+          <select id="portions" style="width:auto"><option>1</option><option>2</option><option>3</option></select>
+          <button class="primary" id="feed">Feed now</button>
+        </div>
+
+        <div class="phone" aria-live="polite">
+          <div class="phone-head">
+            <strong>Dashboard preview</strong>
+            <span class="pill" id="overall"></span>
+          </div>
+          <div class="tiles">
+            <div class="tile" id="t-temp"><div class="lbl">Temperature</div><div class="val"></div><span class="pill"></span></div>
+            <div class="tile" id="t-ph"><div class="lbl">pH</div><div class="val"></div><span class="pill"></span></div>
+            <div class="tile" id="t-lvl"><div class="lbl">Water level</div><div class="val"></div><span class="pill"></span></div>
+          </div>
+          <div class="rec" id="rec"></div>
+          <div>
+            <div class="lbl muted" style="font-size:.78rem">Feeding log</div>
+            <div class="log" id="log"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="plate" id="build">
+    <div class="plate-head">
+      <span class="eyebrow">Plate 5</span>
+      <h2>Build order</h2>
+      <p class="muted">Test each part alone before combining. When something fails, you then know which part caused it.</p>
+    </div>
+    <div class="steps">
+      <div class="panel step"><span class="n">Stage 1</span><h3>ESP32 alone</h3><ul><li>Install the ESP32 board package</li><li>Upload Blink and confirm the LED</li><li>Install CP2102/CH340 driver if no port</li></ul></div>
+      <div class="panel step"><span class="n">Stage 2</span><h3>One sensor at a time</h3><ul><li>DS18B20, then pH, then ultrasonic</li><li>Check each in Serial Monitor</li><li>−127 °C means a wiring fault</li></ul></div>
+      <div class="panel step"><span class="n">Stage 3</span><h3>Outputs</h3><ul><li>Servo sweep test on the 5V supply</li><li>LCD shows text (try 0x3F if blank)</li><li>Buzzer beeps</li></ul></div>
+      <div class="panel step"><span class="n">Stage 4</span><h3>Feeder</h3><ul><li>Drum with one hole on the servo horn</li><li>Weigh 20 portions, adjust the hole</li><li>Use pellets, not flakes</li></ul></div>
+      <div class="panel step"><span class="n">Stage 5</span><h3>Mount on the tank</h3><ul><li>Ultrasonic ≥ 25 cm above the water line</li><li>Probes underwater, away from the heater</li><li>Electronics boxed, cables with drip loops</li></ul></div>
+      <div class="panel step"><span class="n">Stage 6</span><h3>Calibrate and connect</h3><ul><li><span class="mono">cal7</span> in pH 6.86, <span class="mono">cal4</span> in pH 4.00</li><li>Fill in <span class="mono">config.h</span>, upload firmware</li><li>Check readings on the dashboard</li></ul></div>
+    </div>
+  </section>
+</main>
+
+<footer class="wrap muted">
+  Prototype model for planning and defense. Fish ranges are general hobbyist guidelines; the AI gives basic care guidance only and does not replace a veterinarian or aquatic specialist.
+</footer>
+
+<script>
+const SVGNS = "http://www.w3.org/2000/svg";
+function el(tag, attrs, parent, text) {
+  const n = document.createElementNS(SVGNS, tag);
+  for (const k in attrs) n.setAttribute(k, attrs[k]);
+  if (text !== undefined) n.textContent = text;
+  if (parent) parent.appendChild(n);
+  return n;
+}
+const v = (name) => `var(--${name})`;
+
+/* ---------------------------------------------------------- wiring diagram */
+(function wiring() {
+  const s = document.getElementById("wiring-svg");
+  const W = (d, color, w = 3) => el("path", { d, stroke: v(color), "stroke-width": w, fill: "none", "stroke-linejoin": "round", "stroke-linecap": "round" }, s);
+  const dot = (x, y, color) => el("circle", { cx: x, cy: y, r: 4.5, fill: v(color) }, s);
+  const txt = (x, y, t, o = {}) => el("text", { x, y, "font-size": o.size || 13, "text-anchor": o.anchor || "start", "font-weight": o.weight || 400, ...(o.fill ? { style: `fill:${o.fill}` } : {}) }, s, t);
+
+  function resistor(x1, y1, x2, y2, color, label) {
+    // zigzag between two points (horizontal or vertical)
+    const horiz = y1 === y2, n = 6, len = horiz ? x2 - x1 : y2 - y1, seg = len / (n + 2);
+    let d = `M${x1} ${y1} `;
+    for (let i = 0; i <= n; i++) {
+      const t = seg * (i + 1), a = i === 0 || i === n ? 0 : (i % 2 ? -7 : 7);
+      d += horiz ? `L${x1 + t} ${y1 + a} ` : `L${x1 + a} ${y1 + t} `;
+    }
+    d += `L${x2} ${y2}`;
+    el("path", { d, stroke: v(color), "stroke-width": 2.5, fill: "none", "stroke-linejoin": "round" }, s);
+    if (horiz) txt((x1 + x2) / 2, y1 - 12, label, { anchor: "middle", size: 12 });
+    else txt(x1 + 12, (y1 + y2) / 2 + 4, label, { size: 12 });
+  }
+  function ground(x, y) {
+    W(`M${x} ${y} v8`, "w-gnd", 2.5);
+    [[14, 0], [9, 5], [4, 10]].forEach(([hw, dy]) => W(`M${x - hw} ${y + 8 + dy} h${hw * 2}`, "w-gnd", 2.5));
+  }
+  function part(x, y, w, h, title, lines, pins, side) {
+    el("rect", { x, y, width: w, height: h, rx: 10, fill: v("panel"), stroke: v("line"), "stroke-width": 1.5 }, s);
+    txt(x + 14, y + 24, title, { weight: 600, size: 14 });
+    const lx = side === "left" ? x + 70 : x + 19; // keep power notes clear of the pin labels
+    lines.forEach((l, i) => {
+      const [label, color] = l;
+      el("circle", { cx: lx, cy: y + 44 + i * 18, r: 4, fill: v(color) }, s);
+      txt(lx + 11, y + 48 + i * 18, label, { size: 12 });
+    });
+    pins.forEach(([label, py, color]) => {
+      const px = side === "right" ? x + w : x;
+      txt(side === "right" ? px - 10 : px + 10, py + 4, label, { anchor: side === "right" ? "end" : "start", size: 12, weight: 600 });
+      el("circle", { cx: px, cy: py, r: 4.5, fill: v(color) }, s);
+    });
+  }
+
+  // ESP32 board
+  el("rect", { x: 440, y: 80, width: 220, height: 520, rx: 12, fill: v("board"), stroke: v("line") }, s);
+  el("rect", { x: 515, y: 96, width: 70, height: 46, rx: 4, fill: "none", stroke: v("board-ink"), "stroke-opacity": 0.4 }, s);
+  txt(550, 124, "Wi-Fi", { anchor: "middle", size: 11, fill: "var(--board-ink)" });
+  txt(550, 330, "ESP32", { anchor: "middle", size: 22, weight: 600, fill: "var(--board-ink)" });
+  txt(550, 352, "DevKit V1", { anchor: "middle", size: 13, fill: "var(--board-ink)" });
+  const L = [["GPIO4", 170, "w-temp"], ["GPIO34", 330, "w-ph"], ["GPIO5", 470, "w-trig"], ["GPIO18", 520, "w-echo"]];
+  const R = [["GPIO13", 150, "w-servo"], ["GPIO25", 280, "w-buzz"], ["GPIO21 SDA", 410, "w-sda"], ["GPIO22 SCL", 450, "w-scl"]];
+  L.forEach(([n, y, c]) => { el("rect", { x: 432, y: y - 5, width: 16, height: 10, rx: 2, fill: v(c) }, s); txt(456, y + 4, n, { size: 12, fill: "var(--board-ink)" }); });
+  R.forEach(([n, y, c]) => { el("rect", { x: 652, y: y - 5, width: 16, height: 10, rx: 2, fill: v(c) }, s); txt(644, y + 4, n, { size: 12, anchor: "end", fill: "var(--board-ink)" }); });
+  [["3V3", 485, "w-3v"], ["GND", 550, "w-gnd"], ["VIN 5V", 615, "w-5v"]].forEach(([n, x, c]) => {
+    el("rect", { x: x - 5, y: 592, width: 10, height: 16, rx: 2, fill: v(c) }, s);
+    txt(x, 582, n, { anchor: "middle", size: 12, fill: "var(--board-ink)" });
+  });
+  // power entry
+  W("M615 608 V640 H740", "w-5v"); W("M550 608 V648 H740", "w-gnd");
+  el("rect", { x: 740, y: 624, width: 170, height: 32, rx: 6, fill: v("panel"), stroke: v("line") }, s);
+  txt(825, 645, "5V 2–3A adapter", { anchor: "middle", size: 12, weight: 600 });
+
+  // left parts
+  part(30, 110, 230, 110, "DS18B20 temp probe", [["VCC → 3.3V", "w-3v"], ["GND → GND", "w-gnd"]], [["DATA", 170, "w-temp"]], "right");
+  W("M260 170 H432", "w-temp"); dot(340, 170, "w-temp");
+  W("M340 170 V150", "w-temp", 2.5); resistor(340, 150, 340, 96, "w-3v", "4.7kΩ"); W("M340 96 V86", "w-3v", 2.5);
+  txt(340, 78, "3.3V", { anchor: "middle", size: 12, weight: 600 });
+
+  part(30, 262, 230, 120, "PH-4502C pH module", [["V+ → 5V", "w-5v"], ["G → GND", "w-gnd"]], [["Po", 330, "w-ph"]], "right");
+  W("M260 330 H280", "w-ph"); resistor(280, 330, 345, 330, "w-ph", "10kΩ"); W("M345 330 H432", "w-ph");
+  dot(390, 330, "w-ph"); resistor(390, 330, 390, 395, "w-gnd", "20kΩ"); ground(390, 395);
+
+  part(30, 420, 230, 140, "JSN-SR04T ultrasonic", [["5V → 5V", "w-5v"], ["GND → GND", "w-gnd"]], [["TRIG", 470, "w-trig"], ["ECHO", 520, "w-echo"]], "right");
+  W("M260 470 H432", "w-trig");
+  W("M260 520 H280", "w-echo"); resistor(280, 520, 345, 520, "w-echo", "10kΩ"); W("M345 520 H432", "w-echo");
+  dot(395, 520, "w-echo"); resistor(395, 520, 395, 575, "w-gnd", "20kΩ"); ground(395, 575);
+
+  // right parts
+  part(860, 96, 230, 110, "Servo feeder", [["V+ → 5V supply", "w-5v"], ["GND → GND", "w-gnd"]], [["SIG", 150, "w-servo"]], "left");
+  W("M668 150 H860", "w-servo");
+  part(860, 236, 230, 90, "Active buzzer", [["− → GND", "w-gnd"]], [["+", 280, "w-buzz"]], "left");
+  W("M668 280 H860", "w-buzz");
+  part(860, 356, 230, 104, "LCD 16x2 · I2C", [["VCC → 5V", "w-5v"], ["GND → GND", "w-gnd"]], [["SDA", 400, "w-sda"], ["SCL", 430, "w-scl"]], "left");
+  part(860, 486, 230, 104, "DS3231 RTC", [["VCC → 3.3V", "w-3v"], ["GND → GND", "w-gnd"]], [["SDA", 530, "w-sda"], ["SCL", 560, "w-scl"]], "left");
+  // I2C bus
+  // Arcs ("hops") mark wires that cross without connecting; dots mark real joins.
+  W("M668 410 H760", "w-sda"); W("M760 400 V530", "w-sda"); W("M760 400 H860", "w-sda");
+  W("M760 530 H782 a8 8 0 0 1 16 0 H860", "w-sda");
+  dot(760, 410, "w-sda");
+  W("M668 450 H752 a8 8 0 0 1 16 0 H790", "w-scl");
+  W("M790 430 V560", "w-scl"); W("M790 430 H860", "w-scl"); W("M790 560 H860", "w-scl");
+  dot(790, 450, "w-scl");
+
+  // legend
+  const leg = document.getElementById("legend");
+  [["5V", "w-5v"], ["3.3V", "w-3v"], ["GND", "w-gnd"], ["Temperature", "w-temp"], ["pH", "w-ph"], ["TRIG", "w-trig"], ["ECHO", "w-echo"], ["Servo", "w-servo"], ["Buzzer", "w-buzz"], ["I2C SDA", "w-sda"], ["I2C SCL", "w-scl"]]
+    .forEach(([n, c]) => { const sp = document.createElement("span"); sp.innerHTML = `<i style="background:var(--${c})"></i>${n}`; leg.appendChild(sp); });
+})();
+
+/* ---------------------------------------------------------- prototype model */
+const PROFILES = {
+  betta: { name: "Betta", tempMin: 24, tempMax: 28, phMin: 6.5, phMax: 7.5, levelMinPct: 85, levelCriticalPct: 70 },
+  goldfish: { name: "Goldfish", tempMin: 18, tempMax: 24, phMin: 7.0, phMax: 8.0, levelMinPct: 85, levelCriticalPct: 70 },
+  guppy: { name: "Guppy", tempMin: 22, tempMax: 28, phMin: 7.0, phMax: 8.0, levelMinPct: 85, levelCriticalPct: 70 },
+  neon_tetra: { name: "Neon tetra", tempMin: 21, tempMax: 27, phMin: 6.0, phMax: 7.0, levelMinPct: 85, levelCriticalPct: 70 },
+  tilapia: { name: "Tilapia", tempMin: 25, tempMax: 30, phMin: 6.5, phMax: 8.5, levelMinPct: 85, levelCriticalPct: 70 },
+};
+const RANK = { normal: 0, warning: 1, critical: 2 };
+function range(val, min, max, margin) {
+  if (val >= min && val <= max) return { level: "normal" };
+  const low = val < min, diff = low ? min - val : val - max;
+  return { level: diff <= margin ? "warning" : "critical", dir: low ? "low" : "high" };
+}
+function evaluate(r, p) {
+  const t = range(r.temp, p.tempMin, p.tempMax, 1.5);
+  const ph = range(r.ph, p.phMin, p.phMax, 0.3);
+  const lv = r.lvl >= p.levelMinPct ? { level: "normal" } : { level: r.lvl < p.levelCriticalPct ? "critical" : "warning", dir: "low" };
+  const overall = [t, ph, lv].reduce((w, x) => (RANK[x.level] > RANK[w] ? x.level : w), "normal");
+  return { t, ph, lv, overall };
+}
+const ADVICE = {
+  "t-high": ["Check the heater setting; unplug it if it is stuck on.", "Do a 10–20% water change with slightly cooler conditioned water.", "Lower the temperature by no more than 1–2 °C per hour and increase aeration."],
+  "t-low": ["Check that the heater is plugged in and working.", "Cover the tank to reduce heat loss.", "Raise the temperature gradually, 1–2 °C per hour."],
+  "ph-high": ["Confirm the reading with a test kit.", "Do a 10–20% water change with water of the correct pH.", "Remove limestone, coral or shells that raise pH."],
+  "ph-low": ["Confirm the reading with a test kit.", "Do a 10–25% water change and vacuum the gravel.", "Reduce feeding and remove uneaten food."],
+  "lv-low": ["Top up with dechlorinated water at tank temperature.", "Check the tank and filter hoses for leaks.", "Keep the filter intake and heater fully underwater."],
+};
+const LABEL = { normal: "Normal", warning: "Warning", critical: "Critical" };
+
+const $ = (id) => document.getElementById(id);
+const state = { temp: 26, ph: 7, lvl: 95, fish: "betta", feeding: false, log: [] };
+
+const fishSel = $("fish");
+Object.entries(PROFILES).forEach(([id, p]) => fishSel.add(new Option(`${p.name} (${p.tempMin}–${p.tempMax} °C, pH ${p.phMin}–${p.phMax})`, id)));
+
+/* tank drawing */
+const S = $("tank-svg");
+const BOTTOM = 470, PXCM = 395 / 45; // sensor face at y=75, 45 cm to bottom
+el("rect", { x: 0, y: 0, width: 900, height: 540, fill: v("panel") }, S);
+el("rect", { x: 60, y: 488, width: 820, height: 10, rx: 3, fill: v("line") }, S); // stand
+// back wall + water
+el("rect", { x: 120, y: 170, width: 500, height: 300, fill: v("glass") }, S);
+const water = el("rect", { x: 122, y: 200, width: 496, height: 270, fill: v("water") }, S);
+const waterLine = el("line", { x1: 122, x2: 618, y1: 200, y2: 200, stroke: v("water-deep"), "stroke-width": 3 }, S);
+el("rect", { x: 122, y: 452, width: 496, height: 18, fill: v("muted"), opacity: 0.35 }, S); // gravel
+// plants
+[[170, 452, 70], [190, 452, 50], [585, 452, 60]].forEach(([x, y, h]) => el("path", { d: `M${x} ${y} q-12 ${-h / 2} 4 ${-h} q10 ${h / 2} -4 ${h}`, fill: v("ok"), opacity: 0.55 }, S));
+// fish
+const fish = el("g", {}, S);
+el("ellipse", { cx: 0, cy: 0, rx: 26, ry: 13, fill: v("crit"), opacity: 0.85 }, fish);
+el("path", { d: "M-22 0 L-42 -13 L-42 13 Z", fill: v("crit"), opacity: 0.85 }, fish);
+el("circle", { cx: 14, cy: -3, r: 2.6, fill: v("ink") }, fish);
+// glass walls + lid
+el("rect", { x: 120, y: 170, width: 500, height: 300, fill: "none", stroke: v("ink"), "stroke-width": 3, rx: 2 }, S);
+el("rect", { x: 112, y: 158, width: 516, height: 12, rx: 3, fill: v("muted") }, S);
+
+// ultrasonic bracket + sensor
+el("path", { d: "M628 164 V52 H530", stroke: v("muted"), "stroke-width": 6, fill: "none" }, S);
+el("rect", { x: 488, y: 52, width: 70, height: 24, rx: 4, fill: v("w-trig") }, S);
+el("circle", { cx: 506, cy: 76, r: 8, fill: v("panel"), stroke: v("ink") }, S);
+el("circle", { cx: 540, cy: 76, r: 8, fill: v("panel"), stroke: v("ink") }, S);
+const beam = el("line", { x1: 523, x2: 523, y1: 84, y2: 200, stroke: v("w-trig"), "stroke-width": 2, "stroke-dasharray": "5 5" }, S);
+const beamTxt = el("text", { x: 515, y: 140, "text-anchor": "end" }, S, "");
+// lid hole for beam
+el("rect", { x: 508, y: 158, width: 30, height: 12, fill: v("glass") }, S);
+
+// feeder on lid
+const drum = el("g", { transform: "translate(240 118)" }, S);
+el("circle", { cx: 0, cy: 0, r: 28, fill: v("panel"), stroke: v("ink"), "stroke-width": 2.5 }, drum);
+el("circle", { cx: 0, cy: 20, r: 6, fill: v("ink") }, drum); // the hole
+for (let i = 0; i < 7; i++) el("circle", { cx: -12 + (i % 4) * 8, cy: -8 + Math.floor(i / 4) * 8, r: 3, fill: v("warn") }, drum);
+el("rect", { x: 270, y: 104, width: 34, height: 28, rx: 4, fill: v("w-servo") }, S); // servo body
+el("rect", { x: 226, y: 146, width: 28, height: 12, fill: v("muted") }, S); // chute
+el("rect", { x: 230, y: 158, width: 20, height: 12, fill: v("glass") }, S); // lid opening
+const pellets = el("g", {}, S);
+
+// probes: cables from control box
+el("path", { d: "M700 300 C660 300 640 120 600 120 L600 420", stroke: v("w-temp"), "stroke-width": 4, fill: "none" }, S);
+el("rect", { x: 594, y: 410, width: 12, height: 34, rx: 6, fill: v("muted") }, S);
+el("path", { d: "M700 330 C650 330 650 100 560 100 L560 380", stroke: v("w-ph"), "stroke-width": 4, fill: "none" }, S);
+el("rect", { x: 553, y: 330, width: 14, height: 56, rx: 4, fill: v("w-ph") }, S);
+el("circle", { cx: 560, cy: 392, r: 9, fill: v("glass"), stroke: v("w-ph"), "stroke-width": 2 }, S);
+el("path", { d: "M700 270 C680 270 640 64 558 64", stroke: v("w-trig"), "stroke-width": 3, fill: "none" }, S);
+el("path", { d: "M700 250 C660 250 330 150 304 118", stroke: v("w-servo"), "stroke-width": 3, fill: "none" }, S);
+
+// control box
+el("rect", { x: 700, y: 220, width: 170, height: 220, rx: 12, fill: v("board"), stroke: v("line") }, S);
+el("rect", { x: 712, y: 236, width: 146, height: 52, rx: 4, fill: v("lcd") }, S);
+const lcd1 = el("text", { x: 718, y: 257, style: "fill:var(--lcd-ink);font-size:12.5px" }, S, "");
+const lcd2 = el("text", { x: 718, y: 278, style: "fill:var(--lcd-ink);font-size:12.5px" }, S, "");
+el("text", { x: 785, y: 318, "text-anchor": "middle", style: "fill:var(--board-ink);font-size:13px;font-weight:600" }, S, "ESP32 + RTC");
+const wifiLed = el("circle", { cx: 722, cy: 418, r: 6, fill: v("ok") }, S);
+el("text", { x: 734, y: 422, style: "fill:var(--board-ink);font-size:11px" }, S, "Wi-Fi");
+const buzz = el("circle", { cx: 840, cy: 410, r: 14, fill: v("crit"), opacity: 0.25 }, S);
+el("text", { x: 840, y: 380, "text-anchor": "middle", style: "fill:var(--board-ink);font-size:11px" }, S, "buzzer");
+el("path", { d: "M785 440 V500 H880", stroke: v("w-5v"), "stroke-width": 3, fill: "none" }, S);
+el("text", { x: 790, y: 520, style: "font-size:11px;fill:var(--muted)" }, S, "5V adapter");
+
+// labels
+function callout(x1, y1, x2, y2, t, anchor = "start") {
+  el("line", { x1, y1, x2, y2, stroke: v("muted"), "stroke-width": 1 }, S);
+  el("circle", { cx: x1, cy: y1, r: 3, fill: v("muted") }, S);
+  el("text", { x: x2 + (anchor === "end" ? -4 : 4), y: y2 + 4, "text-anchor": anchor, style: "font-size:12px;fill:var(--muted)" }, S, t);
+}
+callout(214, 104, 70, 28, "Feeder drum (1 hole = 1 portion)", "start");
+callout(290, 104, 330, 62, "Servo", "start");
+callout(492, 56, 420, 22, "Ultrasonic level sensor", "start");
+callout(600, 440, 660, 505, "DS18B20 probe", "start");
+callout(568, 392, 470, 505, "pH probe", "end");
+
+function fishProfile() { return PROFILES[state.fish]; }
+
+function render() {
+  const p = fishProfile();
+  const ev = evaluate(state, p);
+  $("temp-o").textContent = state.temp.toFixed(1) + " °C";
+  $("ph-o").textContent = state.ph.toFixed(2);
+  $("lvl-o").textContent = state.lvl + " %";
+
+  // water level drawing (100% = 30 cm deep)
+  const top = BOTTOM - (state.lvl / 100) * 30 * PXCM;
+  water.setAttribute("y", top); water.setAttribute("height", BOTTOM - top);
+  waterLine.setAttribute("y1", top); waterLine.setAttribute("y2", top);
+  beam.setAttribute("y2", top);
+  const dist = 45 - 30 * state.lvl / 100;
+  beamTxt.setAttribute("y", Math.max(110, (84 + top) / 2));
+  beamTxt.textContent = dist.toFixed(1) + " cm";
+
+  // buzzer
+  buzz.classList.toggle("buzz-on", ev.overall === "critical");
+  buzz.setAttribute("opacity", ev.overall === "critical" ? 1 : 0.25);
+
+  // dashboard tiles
+  const tile = (id, valTxt, r) => {
+    const t = $(id); t.className = "tile " + r.level;
+    t.querySelector(".val").textContent = valTxt;
+    const pill = t.querySelector(".pill"); pill.className = "pill " + r.level; pill.textContent = LABEL[r.level];
+  };
+  tile("t-temp", state.temp.toFixed(1) + "°", ev.t);
+  tile("t-ph", state.ph.toFixed(2), ev.ph);
+  tile("t-lvl", state.lvl + "%", ev.lv);
+  const ov = $("overall"); ov.className = "pill " + ev.overall; ov.textContent = LABEL[ev.overall];
+
+  // recommendation
+  const rec = $("rec");
+  const keys = [];
+  if (ev.t.level !== "normal") keys.push("t-" + ev.t.dir);
+  if (ev.ph.level !== "normal") keys.push("ph-" + ev.ph.dir);
+  if (ev.lv.level !== "normal") keys.push("lv-low");
+  if (!keys.length) {
+    rec.innerHTML = `<strong>All conditions suitable for ${p.name}.</strong><span>Continue regular monitoring and weekly partial water changes.</span>`;
+  } else {
+    const problems = [];
+    if (ev.t.level !== "normal") problems.push(`temperature is too ${ev.t.dir} for ${p.name} (${p.tempMin}–${p.tempMax} °C)`);
+    if (ev.ph.level !== "normal") problems.push(`pH is too ${ev.ph.dir} (${p.phMin}–${p.phMax})`);
+    if (ev.lv.level !== "normal") problems.push(`water level is low (keep ≥ ${p.levelMinPct}%)`);
+    const actions = [...new Set(keys.flatMap((k) => ADVICE[k]))].slice(0, 5);
+    rec.innerHTML = `<strong>${ev.overall === "critical" ? "Urgent: " : "Needs attention: "}${problems.join("; ")}.</strong>
+      <ol>${actions.map((a) => `<li>${a}</li>`).join("")}</ol>
+      <span class="disc">Sample of an AI-assisted recommendation. Basic guidance only; not a replacement for a veterinarian or aquatic specialist.</span>`;
+  }
+  renderLcd(ev);
+}
+
+let lcdPage = 0;
+function renderLcd(ev) {
+  ev = ev || evaluate(state, fishProfile());
+  if (state.feeding) { lcd1.textContent = "Feeding..."; lcd2.textContent = $("portions").value + " portion(s)"; return; }
+  if (lcdPage === 0) {
+    lcd1.textContent = `T:${state.temp.toFixed(1)}C pH:${state.ph.toFixed(2)}`;
+    lcd2.textContent = `Lvl:${state.lvl}% WiFi`;
+  } else {
+    lcd1.textContent = "Status:";
+    lcd2.textContent = ev.overall.toUpperCase();
+  }
+}
+setInterval(() => { lcdPage = 1 - lcdPage; renderLcd(); }, 3000);
+
+function addLog(text, at) {
+  const t = at || new Date().toLocaleTimeString("en-PH", { hour: "2-digit", minute: "2-digit" });
+  state.log.unshift(`${t}  ${text}`);
+  $("log").innerHTML = state.log.slice(0, 20).map((l) => `<div>${l}</div>`).join("");
+}
+addLog("scheduled · 1 portion · dispensed", "08:00 AM");
+
+const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+function feed() {
+  if (state.feeding) return;
+  const n = +$("portions").value;
+  state.feeding = true; $("feed").disabled = true; renderLcd();
+  let i = 0;
+  const cycle = () => {
+    drum.setAttribute("transform", "translate(240 118) rotate(180)");
+    const top = BOTTOM - (state.lvl / 100) * 30 * PXCM;
+    for (let k = 0; k < 4; k++) {
+      const pe = el("circle", { cx: 236 + k * 3, cy: 172, r: 3.2, fill: v("warn") }, pellets);
+      pe.style.setProperty("--fall", (top - 172 + 30 + k * 6) + "px");
+      if (!reduced) pe.style.animation = `drop 0.9s ease-in ${k * 0.08}s forwards`;
+      setTimeout(() => pe.remove(), 2500);
+    }
+    setTimeout(() => {
+      drum.setAttribute("transform", "translate(240 118) rotate(0)");
+      i++;
+      if (i < n) setTimeout(cycle, 600);
+      else { state.feeding = false; $("feed").disabled = false; addLog(`manual · ${n} portion(s) · dispensed`); renderLcd(); }
+    }, 600);
+  };
+  cycle();
+}
+$("feed").addEventListener("click", feed);
+
+["temp", "ph", "lvl"].forEach((id) => $(id).addEventListener("input", (e) => { state[id] = +e.target.value; render(); }));
+fishSel.addEventListener("change", (e) => { state.fish = e.target.value; render(); });
+const SCEN = { normal: { temp: 26, ph: 7.0, lvl: 95 }, hot: { temp: 30.6, ph: 7.1, lvl: 92 }, acid: { temp: 26, ph: 5.9, lvl: 93 }, low: { temp: 26.5, ph: 7.0, lvl: 66 } };
+document.querySelectorAll("[data-sc]").forEach((b) => b.addEventListener("click", () => {
+  const sc = SCEN[b.dataset.sc]; Object.assign(state, sc);
+  $("temp").value = sc.temp; $("ph").value = sc.ph; $("lvl").value = sc.lvl;
+  if (state.fish !== "betta") { state.fish = "betta"; fishSel.value = "betta"; }
+  render();
+}));
+
+// fish swimming
+let fx = 300, dirX = 1, tt = 0;
+function swim() {
+  const top = BOTTOM - (state.lvl / 100) * 30 * PXCM;
+  tt += 0.02;
+  if (!reduced) { fx += dirX * 0.8; if (fx > 470 || fx < 180) dirX *= -1; }
+  const fy = Math.max(top + 32, Math.min(430, (top + 440) / 2 + Math.sin(tt) * 18));
+  fish.setAttribute("transform", `translate(${fx} ${fy}) scale(${dirX} 1)`);
+  requestAnimationFrame(swim);
+}
+fishSel.value = "betta";
+render();
+swim();
+</script>

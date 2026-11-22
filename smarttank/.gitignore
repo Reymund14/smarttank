@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.env
+.firebaserc
+.pio/
+.vscode/
+*.log
+functions/.secret.local
+web/android/
+web/SmartTank-debug.apk
+*.apk

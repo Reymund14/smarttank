@@ -1,0 +1,26 @@
+{
+  "rules": {
+    "aquarium": {
+      ".read": "auth != null",
+      ".write": "auth != null",
+      "live": {
+        ".validate": "newData.hasChildren(['temperature', 'ph', 'waterLevel', 'ts'])",
+        "temperature": { ".validate": "newData.isNumber()" },
+        "ph": { ".validate": "newData.isNumber()" },
+        "waterLevel": { ".validate": "newData.isNumber()" },
+        "ts": { ".validate": "newData.isNumber()" }
+      },
+      "history": { ".indexOn": ["ts"] },
+      "feedingLogs": { ".indexOn": ["ts"] },
+      "alerts": { ".indexOn": ["ts"] },
+      "recommendations": { ".indexOn": ["ts"] },
+      "chatLogs": { ".indexOn": ["ts"] },
+      "settings": {
+        "feeding": {
+          "portions": { ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 5" },
+          "times": { ".validate": "newData.isString() && newData.val().length <= 60" }
+        }
+      }
+    }
+  }
+}

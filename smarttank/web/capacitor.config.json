@@ -1,0 +1,16 @@
+{
+  "appId": "edu.olfu.smarttank",
+  "appName": "SmartTank",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "backgroundColor": "#0e7490"
+  },
+  "plugins": {
+    "LocalNotifications": {
+      "iconColor": "#0e7490"
+    }
+  }
+}
