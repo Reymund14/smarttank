@@ -10,7 +10,7 @@ There are three ways to get it on a phone. **Option A is the easiest.**
 
 ## Option A — Build the APK in the cloud with GitHub Actions (no Android Studio)
 
-1. Create a GitHub repository and push the whole `smarttank` folder to it (branch `main`).
+1. Push this repository as-is to GitHub, keeping the `smarttank/` folder at the repo root (branch `main`).
 2. In the repository: **Settings → Secrets and variables → Actions → New repository secret**.
    Add these (values come from your Firebase web app config, the same ones in `web/.env`):
 
